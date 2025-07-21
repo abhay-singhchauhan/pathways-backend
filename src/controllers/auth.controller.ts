@@ -27,7 +27,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
       if (!user) {
         console.log('use does not exist', payload)
-        const newUser = new User({ email: email, firstName: payload?.given_name, lastName: payload?.family_name, profileUrl: payload?.picture });
+        const newUser = new User({ email: email, firstName: payload?.given_name, lastName: payload?.family_name || '', profileUrl: payload?.picture });
         await newUser.save();
         const token = generateToken(newUser);
         res.status(200).json({

@@ -339,6 +339,8 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
 export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
   try {
     // Extract token from request headers
+
+  
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       res.status(401).json({
