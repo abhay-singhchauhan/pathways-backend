@@ -77,23 +77,25 @@ export const validatePayment = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const session = await Session.findOne({ orderId: razorpay_order_id });
+    const session = await Session.findOneAndUpdate({ orderId: razorpay_order_id }, { paymentStatus: 'paid', paymentId: razorpay_payment_id }, { new: true });
     if (!session) {
       res.status(404).json({
         success: false,
         message: 'Session not found'
-      });
+      }); 
+      return;
     }
 
-   await session?.updateOne({ paymentStatus: 'paid', paymentId: razorpay_payment_id });
    res.status(200).json({
     success: true,
-    message: 'Payment validated successfully'
+    message: 'Payment validated successfully',
+    data: session
    });
 
   } catch (error) {
     console.error('Validate payment error:', error);
     res.status(500).json({
+      error: error,
       success: false,
       message: 'Internal server error'
     });
@@ -105,7 +107,8 @@ export const validatePayment = async (req: Request, res: Response): Promise<void
 // @access  Admin
 export const getAllSessions = async (req: Request, res: Response): Promise<void> => {
   try {
-    const sessions = await Session.find().populate('userId');
+    const userId = req.user?.id as string;
+    const sessions = await Session.find({userId});
     res.status(200).json(sessions);
   } catch (error) {
     console.error('Get all sessions error:', error);
@@ -121,7 +124,11 @@ export const getAllSessions = async (req: Request, res: Response): Promise<void>
 // @access  Private
 export const getSessionById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const session = await Session.findById(req.params.id).populate('userId');
+    const userId = req.user?.id as string;
+    const session = await Session.findOne({ userId }).populate({
+      path: 'userId',
+      select: 'firstName lastName email' 
+    });
     if (!session) {   
       res.status(404).json({
         success: false,
@@ -129,11 +136,7 @@ export const getSessionById = async (req: Request, res: Response): Promise<void>
       });
       return;
     }
-    res.status(200).json({
-      success: true,
-      message: 'Session retrieved successfully',
-      data: session
-    });
+    res.status(200).json(session);
   } catch (error) {
     console.error('Get session by ID error:', error);
     res.status(500).json({
