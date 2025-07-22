@@ -30,11 +30,7 @@ export const createService = async (req: Request, res: Response): Promise<void> 
 export const getAllServices = async (req: Request, res: Response): Promise<void> => {
   try {
     const services = await Service.find();
-    res.status(200).json({
-      success: true,
-      message: 'Services retrieved successfully',
-      data: services
-    });
+    res.status(200).json(services);
   } catch (error) {
     console.error('Get all services error:', error);
     res.status(500).json({

@@ -1,49 +1,61 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISession extends Document {
-  user: mongoose.Types.ObjectId;
-  sessionType: 'buddy' | 'mentor' | 'psychologist';
-  reason: string;
-  areasOfStruggle: string[];
+  userId: mongoose.Types.ObjectId;
+  therapistId?: mongoose.Types.ObjectId;
+  serviceId: mongoose.Types.ObjectId;
+  motivation: string;
+  strugglingAreas: string[];
   otherArea?: string;
-  mentorType: 'male' | 'female' | 'doesn\'t matter';
-  language: string;
+  preferredMentorType: 'male' | 'female' | "no-preference";
+  preferredLanguage: string;
   communicationMode: 'video' | 'audio' | 'phone call';
+  amount: number;
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  paymentId?: string;
+  orderId?: string;
+  couponCode?: string;
   date: Date;
   time: string;
-  status: 'booked' | 'cancelled' | 'completed';
+  status: 'pending' | 'assigned' | 'completed';
   createdAt: Date;
   updatedAt: Date;
 }
 
 const sessionSchema = new Schema<ISession>(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    sessionType: {
-      type: String,
-      enum: ['buddy', 'mentor', 'psychologist'],
-      required: true
-    },
-    reason: { type: String, required: true },
-    areasOfStruggle: [{ type: String, required: true }],
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    therapistId: { type: Schema.Types.ObjectId, ref: 'User', required: false },
+    serviceId: { type: Schema.Types.ObjectId, ref: 'Service', required: true },
+    motivation: { type: String, required: true },
+    strugglingAreas: [{ type: String, required: true }],
     otherArea: { type: String },
-    mentorType: {
+    preferredMentorType: {
       type: String,
-      enum: ['male', 'female', "doesn't matter"],
+      enum: ['male', 'female', "no-preference"],
       required: true
     },
-    language: { type: String, required: true },
+    preferredLanguage: { type: String, required: true },
     communicationMode: {
       type: String,
-      enum: ['google meet', 'phone call'],
+      enum: ['google-meet', 'phone-call'],
       required: true
     },
     date: { type: Date, required: true },
     time: { type: String, required: true },
+    amount: { type: Number, required: true },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed'],
+      default: 'pending'
+    },
+    paymentId: { type: String },
+    orderId: { type: String },
+    couponCode: { type: String },
     status: {
       type: String,
-      enum: ['booked', 'cancelled', 'completed'],
-      default: 'booked'
+      enum: ['pending', 'assigned', 'completed'],
+      default: 'pending'
     }
   },
   { timestamps: true }

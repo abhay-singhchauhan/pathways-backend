@@ -2,7 +2,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { IUser, IUserDocument } from '../types/user.types';
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'fallback_secret_key';
-const JWT_EXPIRES_IN: number = parseInt(process.env.JWT_EXPIRES_IN || '3600');
+const JWT_EXPIRES_IN: number = 7 * 24 * 60 * 60; // for seven days
 
 export interface IJWTPayload {
   id: string;

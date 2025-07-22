@@ -19,14 +19,19 @@ export interface ISession {
 export interface ISessionDocument extends ISession, Document {}
 
 export interface ICreateSessionInput {
-  user: string;
-  sessionType: 'buddy' | 'mentor' | 'psychologist';
-  reason: string;
-  areasOfStruggle: string[];
+  userId: string;
+  therapistId?: string;
+  serviceId: string;
+  motivation: string;
+  strugglingAreas: string[];
   otherArea?: string;
-  mentorType: 'male' | 'female' | "doesn't matter";
-  language: string;
-  communicationMode: 'google meet' | 'phone call';
+  preferredMentorType: 'male' | 'female' | "doesn't matter";
+  preferredLanguage: string;
+  communicationMode: 'video' | 'audio' | 'phone call';
+  amount: number;
+  orderId?: string;
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  couponCode?: string;
   date: Date;
   time: string;
 }

@@ -27,6 +27,44 @@ export const createUserSchema = Joi.object({
   role: Joi.string().valid('user', 'admin', 'therapist').optional().default('user')
 });
 
+export const createSessionSchema = Joi.object({
+  userId: Joi.string().hex().length(24).required().messages({
+    'string.hex': 'Invalid user ID format',
+    'string.length': 'Invalid user ID format'
+  }),
+  serviceId: Joi.string().hex().length(24).required().messages({
+    'string.hex': 'Invalid service ID format',
+    'string.length': 'Invalid service ID format'
+  }),
+  motivation: Joi.string().required().messages({
+    'string.empty': 'Motivation is required'
+  }),
+  strugglingAreas: Joi.array().items(Joi.string()).required().messages({
+    'array.base': 'Struggling areas must be an array',
+    'array.empty': 'Struggling areas are required'
+  }),
+  otherArea: Joi.string().optional().allow(''),
+  preferredMentorType: Joi.string().valid('male', 'female', "no-preference").required().messages({
+    'string.empty': 'Preferred mentor type is required' 
+  }),
+  preferredLanguage: Joi.string().required().messages({
+    'string.empty': 'Preferred language is required'
+  }),
+  communicationMode: Joi.string().valid('phone-call', 'google-meet').required().messages({
+    'string.empty': 'Communication mode is required'
+  }),
+  // amount: Joi.number().required().messages({
+  //   'number.base': 'Amount is required'
+  // }),
+  couponCode: Joi.string().optional(),
+  date: Joi.date().required().messages({
+    'date.base': 'Date is required'
+  }),
+  time: Joi.string().required().messages({
+    'string.empty': 'Time is required'
+  })
+});
+
 export const updateUserSchema = Joi.object({
   firstName: Joi.string().trim().min(1).max(50).optional(),
   lastName: Joi.string().trim().min(1).max(50).optional(),
@@ -52,4 +90,4 @@ export const userIdSchema = Joi.object({
     'string.hex': 'Invalid user ID format',
     'string.length': 'Invalid user ID format'
   })
-}); 
+});    
