@@ -107,9 +107,21 @@ export const validatePayment = async (req: Request, res: Response): Promise<void
 // @access  Admin
 export const getAllSessions = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id as string;
-    const sessions = await Session.find({userId});
-    res.status(200).json(sessions);
+
+    if(req.user?.role == 'admin'){
+      const sessions = await Session.find();
+      res.status(200).json(sessions);
+    }else if (req.user?.role == 'therapist'){
+      const userId = req.user?.id as string;
+      const sessions = await Session.find({therapistId: userId});
+      res.status(200).json(sessions);
+    }
+    else{
+      const userId = req.user?.id as string;
+      const sessions = await Session.find({userId});
+      res.status(200).json(sessions);
+    }
+    
   } catch (error) {
     console.error('Get all sessions error:', error);
     res.status(500).json({
@@ -199,3 +211,54 @@ export const deleteSession = async (req: Request, res: Response): Promise<void> 
     });
   }
 }; 
+
+export const assignTherapist = async (req: Request, res: Response): Promise<void> => {
+  try {
+
+    const { sessionId, therapistId } = req.body;
+    const session = await Session.findByIdAndUpdate(sessionId, { therapistId, status: 'assigned' }, { new: true });
+    res.status(200).json(session);
+  } catch (error) {
+    console.error('Assign therapist error:', error);
+    res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+  }
+};
+
+export const updateStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if(req.user?.role !== 'therapist' && req.user?.role !== 'admin'){
+      res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+      return;
+    }
+
+
+    const { sessionId, status } = req.body;
+    const session = await Session.findByIdAndUpdate(
+      { _id: sessionId, therapistId: req.user?.id },
+      { status },
+      { new: true }
+    );
+
+    if(!session){
+      res.status(404).json({
+        success: false,
+        message: 'Session not found'
+      });
+      return;
+    }
+
+    res.status(200).json(session);
+  } catch (error) {
+    console.error('Update status error:', error);
+    res.status(500).json({
+      success: false, 
+      message: 'Internal server error'
+    });
+  }
+};

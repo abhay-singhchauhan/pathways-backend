@@ -32,6 +32,7 @@ router.put('/:id', updateUser);
 
 // Admin only routes
 router.get('/', authorize('admin'), getAllUsers);
+
 router.delete('/:id', authorize('admin'), deleteUser);
 
 export default router; 
