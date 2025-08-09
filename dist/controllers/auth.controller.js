@@ -24,7 +24,7 @@ const googleAuth = async (req, res) => {
         const user = await user_model_1.default.findOne({ email: email });
         if (!user) {
             console.log('use does not exist', payload);
-            const newUser = new user_model_1.default({ email: email, firstName: payload?.given_name, lastName: payload?.family_name, profileUrl: payload?.picture });
+            const newUser = new user_model_1.default({ email: email, firstName: payload?.given_name, lastName: payload?.family_name || '', profileUrl: payload?.picture });
             await newUser.save();
             const token = (0, jwt_1.generateToken)(newUser);
             res.status(200).json({

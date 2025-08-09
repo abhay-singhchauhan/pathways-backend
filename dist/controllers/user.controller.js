@@ -123,29 +123,16 @@ exports.loginUser = loginUser;
 // @access  Private/Admin
 const getAllUsers = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
-        const users = await user_model_1.default.find({ isActive: true })
-            .skip(skip)
-            .limit(limit)
-            .sort({ createdAt: -1 });
-        const totalUsers = await user_model_1.default.countDocuments({ isActive: true });
-        const totalPages = Math.ceil(totalUsers / limit);
-        res.status(200).json({
-            success: true,
-            message: 'Users retrieved successfully',
-            data: {
-                users,
-                pagination: {
-                    currentPage: page,
-                    totalPages,
-                    totalUsers,
-                    hasNextPage: page < totalPages,
-                    hasPrevPage: page > 1
-                }
-            }
-        });
+        const reqRole = req.query.role || 'user';
+        if (req.user?.role !== 'admin') {
+            res.status(403).json({
+                success: false,
+                message: 'Access denied'
+            });
+            return;
+        }
+        const users = await user_model_1.default.find({ role: reqRole, isActive: true });
+        res.status(200).json(users);
     }
     catch (error) {
         console.error('Get all users error:', error);
@@ -316,6 +303,7 @@ const getCurrentUser = async (req, res) => {
             });
             return;
         }
+        console.log(user);
         res.status(200).json({
             success: true,
             message: 'Profile retrieved successfully',

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodeToken = exports.verifyToken = exports.generateToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
-const JWT_EXPIRES_IN = parseInt(process.env.JWT_EXPIRES_IN || '3600');
+const JWT_EXPIRES_IN = 7 * 24 * 60 * 60; // for seven days
 const generateToken = (user) => {
     const payload = {
         id: user._id?.toString() || user.id,
