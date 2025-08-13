@@ -141,8 +141,8 @@ export const getAllSessions = async (req: Request, res: Response): Promise<void>
 
     if(req.user?.role == 'admin'){
       const sessions = await Session.find().populate([
-        { path: 'userId', select: 'firstName lastName email' },
-        { path: 'therapistId', select: 'firstName lastName email' }
+        { path: 'userId', select: 'firstName lastName email phone' },
+        { path: 'therapistId', select: 'firstName lastName email phone' }
       ]);
       res.status(200).json(sessions);
     }else if (req.user?.role == 'therapist'){
