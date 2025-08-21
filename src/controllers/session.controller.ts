@@ -29,50 +29,50 @@ export const createSession = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    let discountAmount = 0;
-    if (data.couponCode) {
-      const coupon = await couponModel.findOne({ code: data.couponCode.toUpperCase().trim(), isActive: true });
-      if (!coupon) {
-        res.status(404).json({ success: false, message: 'Invalid coupon code' });
-        return;
-      }
+    // let discountAmount = 0;
+    // if (data.couponCode) {
+    //   const coupon = await couponModel.findOne({ code: data.couponCode.toUpperCase().trim(), isActive: true });
+    //   if (!coupon) {
+    //     res.status(404).json({ success: false, message: 'Invalid coupon code' });
+    //     return;
+    //   }
 
-      const now = new Date();
-      if ((coupon.startDate && now < coupon.startDate) || (coupon.endDate && now > coupon.endDate)) {
-        res.status(400).json({ success: false, message: 'Coupon not valid at this time' });
-        return;
-      }
-      if (typeof coupon.usageLimit === 'number' && coupon.usedCount >= coupon.usageLimit) {
-        res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
-        return;
-      }
-      if (typeof coupon.minOrderAmount === 'number' && service.price < coupon.minOrderAmount) {
-        res.status(400).json({ success: false, message: 'Order amount below minimum' });
-        return;
-      }
+    //   const now = new Date();
+    //   if ((coupon.startDate && now < coupon.startDate) || (coupon.endDate && now > coupon.endDate)) {
+    //     res.status(400).json({ success: false, message: 'Coupon not valid at this time' });
+    //     return;
+    //   }
+    //   if (typeof coupon.usageLimit === 'number' && coupon.usedCount >= coupon.usageLimit) {
+    //     res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
+    //     return;
+    //   }
+    //   if (typeof coupon.minOrderAmount === 'number' && service.price < coupon.minOrderAmount) {
+    //     res.status(400).json({ success: false, message: 'Order amount below minimum' });
+    //     return;
+    //   }
 
-      discountAmount = coupon.discountType === 'percentage' 
-        ? Math.min((service.price * coupon.discountValue) / 100, coupon.maxDiscountAmount || Infinity)
-        : coupon.discountValue;
-      discountAmount = Math.min(discountAmount, service.price);
-      coupon.usedCount++;
-      await coupon.save();
-    }
+    //   discountAmount = coupon.discountType === 'percentage' 
+    //     ? Math.min((service.price * coupon.discountValue) / 100, coupon.maxDiscountAmount || Infinity)
+    //     : coupon.discountValue;
+    //   discountAmount = Math.min(discountAmount, service.price);
+    //   coupon.usedCount++;
+    //   await coupon.save();
+    // }
 
-    const finalAmount = Math.max(0, service.price - discountAmount);
-    let order;
-    if(finalAmount > 0){
-      order = await razorpay.orders.create({
-        amount: finalAmount * 100,
-        currency: 'INR',
-        receipt: `order_${Date.now()}`
-      });
-    }
+    // const finalAmount = Math.max(0, service.price - discountAmount);
+    // let order;
+    // if(finalAmount > 0){
+    //   order = await razorpay.orders.create({
+    //     amount: finalAmount * 100,
+    //     currency: 'INR',
+    //     receipt: `order_${Date.now()}`
+    //   });
+    // }
 
     const sessionData = {
       ...data,
-      amount: finalAmount,
-      orderId: order?.id,
+      amount: service.price,
+      // orderId: order?.id,
       userId: req.user?.id as string
     };
 
@@ -83,8 +83,8 @@ export const createSession = async (req: Request, res: Response): Promise<void> 
       success: true,
       message: 'Session created successfully',
       data: session,
-      orderId: order?.id,
-      amount: finalAmount
+      // orderId: order?.id,
+      amount: service.price
     });
   } catch (error) {
     console.error('Create session error:', error);
@@ -97,8 +97,8 @@ export const validatePayment = async (req: Request, res: Response): Promise<void
   try {
     console.log(req.body)
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    const shasum = crypto.createHmac('sha256',  process.env.RAZORPAY_KEY_SECRET || '');
-    shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`); 
+    const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '');
+    shasum.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const digest = shasum.digest('hex');
     if (digest !== razorpay_signature) {
       res.status(400).json({
@@ -113,15 +113,15 @@ export const validatePayment = async (req: Request, res: Response): Promise<void
       res.status(404).json({
         success: false,
         message: 'Session not found'
-      }); 
+      });
       return;
     }
 
-   res.status(200).json({
-    success: true,
-    message: 'Payment validated successfully',
-    data: session
-   });
+    res.status(200).json({
+      success: true,
+      message: 'Payment validated successfully',
+      data: session
+    });
 
   } catch (error) {
     console.error('Validate payment error:', error);
@@ -139,29 +139,29 @@ export const validatePayment = async (req: Request, res: Response): Promise<void
 export const getAllSessions = async (req: Request, res: Response): Promise<void> => {
   try {
 
-    if(req.user?.role == 'admin'){
+    if (req.user?.role == 'admin') {
       const sessions = await Session.find().populate([
         { path: 'userId', select: 'firstName lastName email phone' },
         { path: 'therapistId', select: 'firstName lastName email phone' }
       ]);
       res.status(200).json(sessions);
-    }else if (req.user?.role == 'therapist'){
+    } else if (req.user?.role == 'therapist') {
       const userId = req.user?.id as string;
-      const sessions = await Session.find({therapistId: userId}).populate([
+      const sessions = await Session.find({ therapistId: userId }).populate([
         { path: 'userId', select: 'firstName lastName email' },
         { path: 'therapistId', select: 'firstName lastName email' }
       ]);
       res.status(200).json(sessions);
     }
-    else{
+    else {
       const userId = req.user?.id as string;
-      const sessions = await Session.find({userId}).populate([
+      const sessions = await Session.find({ userId }).populate([
         { path: 'userId', select: 'firstName lastName email' },
         { path: 'therapistId', select: 'firstName lastName email' }
       ]);
       res.status(200).json(sessions);
     }
-    
+
   } catch (error) {
     console.error('Get all sessions error:', error);
     res.status(500).json({
@@ -181,7 +181,7 @@ export const getSessionById = async (req: Request, res: Response): Promise<void>
       { path: 'userId', select: 'firstName lastName email' },
       { path: 'therapistId', select: 'firstName lastName email' }
     ]);
-    if (!session) {   
+    if (!session) {
       res.status(404).json({
         success: false,
         message: 'Session not found'
@@ -253,7 +253,7 @@ export const deleteSession = async (req: Request, res: Response): Promise<void> 
       message: 'Internal server error'
     });
   }
-}; 
+};
 
 export const assignTherapist = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -267,15 +267,15 @@ export const assignTherapist = async (req: Request, res: Response): Promise<void
   } catch (error) {
     console.error('Assign therapist error:', error);
     res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
+      success: false,
+      message: 'Internal server error'
+    });
   }
 };
 
 export const updateStatus = async (req: Request, res: Response): Promise<void> => {
   try {
-    if(req.user?.role !== 'therapist' && req.user?.role !== 'admin'){
+    if (req.user?.role !== 'therapist' && req.user?.role !== 'admin') {
       res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -291,7 +291,7 @@ export const updateStatus = async (req: Request, res: Response): Promise<void> =
       { new: true }
     );
 
-    if(!session){
+    if (!session) {
       res.status(404).json({
         success: false,
         message: 'Session not found'
@@ -303,7 +303,7 @@ export const updateStatus = async (req: Request, res: Response): Promise<void> =
   } catch (error) {
     console.error('Update status error:', error);
     res.status(500).json({
-      success: false, 
+      success: false,
       message: 'Internal server error'
     });
   }
